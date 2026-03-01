@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://172.22.127.104:8080/api',
-  mlUrl: 'http://localhost:5001'
+  production: true,
+  apiUrl: 'https://onyxfit-backend-production.up.railway.app/api',
+  mlUrl: 'https://onyxfit-ml.onrender.com'
 };
