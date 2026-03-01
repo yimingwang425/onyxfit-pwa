@@ -1,0 +1,52 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/auth/register-email"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Verify</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="wizard-container">
+    <div class="prompt-area">
+      <h2>Verify Your Email</h2>
+      
+      <p *ngIf="currentEmail" style="color: #666; margin-bottom: 24px;">
+        The verification code will be sent to: <strong>{{ currentEmail }}</strong>
+      </p>
+      <p *ngIf="!currentEmail" style="color: #666; margin-bottom: 24px;">
+        If you do not see the email address field, please return to the previous page.
+      </p>
+
+      <form [formGroup]="form">
+        <ion-item>
+          <ion-input 
+            formControlName="otp" 
+            inputmode="numeric" 
+            autocomplete="one-time-code"
+            placeholder="Enter verification code"
+          ></ion-input>
+        </ion-item>
+
+        <div *ngIf="form.controls['otp']?.invalid && form.controls['otp']?.touched" class="error-text">
+          <ion-text *ngIf="form.controls['otp']?.errors?.['required']">Code is required.</ion-text>
+        </div>
+
+        <div *ngIf="error" class="error-text">
+          <ion-text>{{ error }}</ion-text>
+        </div>
+        
+        <div *ngIf="loading" style="text-align:center; margin-top:12px">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      </form>
+    </div>
+
+    <div class="button-area">
+      <ion-button fill="clear" expand="block" (click)="editEmail()" class="ion-margin-bottom">Change email address</ion-button>
+      
+      <ion-button expand="block" (click)="verifyOtp()" [disabled]="loading || form.invalid">Verify and proceed</ion-button>
+    </div>
+  </div>
+</ion-content>

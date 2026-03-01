@@ -1,0 +1,53 @@
+<ion-content [fullscreen]="true">
+  <div class="dashboard-container">
+    
+    <div class="header-section">
+      <h2>{{ greeting }},</h2>
+      <h1>{{ username }}</h1>
+    </div>
+
+    <div class="widget-card dark">
+      <div class="widget-header">
+        <ion-icon name="sparkles"></ion-icon>
+        <span>AI Insight</span>
+      </div>
+      <p class="widget-content">{{ aiTip }}</p>
+    </div>
+
+    <div class="widget-card light">
+      <div class="widget-header">
+        <ion-icon name="trending-up-outline"></ion-icon>
+        <span>Weekly Goal</span>
+      </div>
+      
+      <div class="chart-wrapper">
+        <canvas #progressChartCanvas></canvas>
+      </div>
+      <div class="progress-stat">
+        <strong>{{ progressData.completed }}</strong>
+        <span>of {{ progressData.total }} workouts</span>
+      </div>
+    </div>
+
+    <div class="section-title">Track Today</div>
+    
+    <div class="action-grid">
+      <button class="action-tile" (click)="logMood()">
+        <div class="icon-circle mood">
+          <ion-icon name="happy-outline"></ion-icon>
+        </div>
+        <span class="label">Mood</span>
+        <span class="value" *ngIf="currentMood">{{ currentMood }}</span>
+      </button>
+
+      <button class="action-tile" (click)="logWater()">
+        <div class="icon-circle water">
+          <ion-icon name="water-outline"></ion-icon>
+        </div>
+        <span class="label">Water</span>
+        <span class="value" *ngIf="currentWater > 0">{{ currentWater }} cups</span>
+      </button>
+    </div>
+
+  </div>
+</ion-content>

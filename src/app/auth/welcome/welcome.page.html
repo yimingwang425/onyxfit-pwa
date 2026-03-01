@@ -1,0 +1,26 @@
+<ion-content [fullscreen]="true">
+  <div class="safe-area-wrapper">
+    
+    <div class="brand-header">
+      <ion-icon name="fitness-outline"></ion-icon>
+    </div>
+
+    <div class="bottom-container">
+      <div class="hero-text">
+        <h1>Shape<br>Your<br>Future</h1>
+        <p>Personalized workouts & meal plans driven by AI.</p>
+      </div>
+
+      <div class="actions">
+        <ion-button expand="block" class="btn-primary" [routerLink]="['/auth/register-email']">
+          Get Started
+        </ion-button>
+        
+        <ion-button expand="block" fill="clear" class="btn-secondary" [routerLink]="['/auth/login-email']">
+          I have an account
+        </ion-button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

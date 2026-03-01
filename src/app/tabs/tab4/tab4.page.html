@@ -1,0 +1,96 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="page-title">Profile</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  
+  <div class="profile-header fade-in">
+    <div class="avatar-circle">
+      {{ avatar }}
+    </div>
+    <div class="user-info">
+      <h1>{{ displayName }}</h1>
+      <p>{{ email }}</p>
+      
+      <div class="badges-row">
+        <div class="pref-badge" *ngIf="profile.goal">
+          {{ profile.goal }}
+        </div>
+        
+        <div class="pref-badge" *ngIf="profile.activityLevel">
+          {{ profile.activityLevel }}
+        </div>
+        
+        <div class="pref-badge" *ngIf="profile.dietPref">
+          {{ profile.dietPref }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="metrics-dashboard fade-in">
+    
+    <div class="metric-item">
+      <span class="label">Age</span>
+      <span class="value">{{ profile.age || '-' }}</span>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="metric-item">
+      <span class="label">Height</span>
+      <span class="value">{{ profile.heightCm || profile.height || '-' }}<small>cm</small></span>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="metric-item">
+      <span class="label">Weight</span>
+      <span class="value">{{ profile.weightKg || profile.weight || '-' }}<small>kg</small></span>
+    </div>
+
+  </div>
+
+  <div class="metrics-dashboard fade-in" *ngIf="aiPlanInfo.workoutType">
+    
+    <div class="metric-item">
+      <span class="label">Program</span>
+      <span class="value">{{ aiPlanInfo.workoutType }}</span>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="metric-item">
+      <span class="label">Daily Target</span>
+      <span class="value">{{ aiPlanInfo.calories }}<small>kcal</small></span>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="metric-item">
+      <span class="label">Protein</span>
+      <span class="value">{{ aiPlanInfo.protein }}<small>g</small></span>
+    </div>
+
+  </div>
+
+  <div class="menu-section fade-in">
+    <div class="section-title">Account</div>
+    
+    <ion-list lines="none" class="premium-list">
+      <ion-item button detail="false" (click)="goToSettings()">
+        <div class="icon-box">
+          <ion-icon name="settings-outline"></ion-icon>
+        </div>
+        <div class="item-content">
+          <span class="item-title">Settings</span>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </ion-item>
+    </ion-list>
+  </div>
+
+</ion-content>
