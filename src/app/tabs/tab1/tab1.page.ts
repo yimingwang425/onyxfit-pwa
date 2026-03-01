@@ -28,7 +28,8 @@ import {
   waterOutline,
   sparklesOutline,
   happyOutline,
-  barChartOutline
+  barChartOutline,
+  fitnessOutline
 } from 'ionicons/icons';
 import { Chart } from 'chart.js/auto';
 import { environment } from '../../../environments/environment';
@@ -89,7 +90,8 @@ export class Tab1Page {
       waterOutline,
       happyOutline,
       sparklesOutline,
-      barChartOutline
+      barChartOutline,
+      fitnessOutline
     });
   }
 

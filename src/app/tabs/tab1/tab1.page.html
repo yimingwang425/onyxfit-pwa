@@ -20,12 +20,17 @@
         <span>Weekly Goal</span>
       </div>
       
-      <div class="chart-wrapper">
+      <div *ngIf="progressData.total > 0" class="chart-wrapper">
         <canvas #progressChartCanvas></canvas>
       </div>
-      <div class="progress-stat">
+      <div *ngIf="progressData.total > 0" class="progress-stat">
         <strong>{{ progressData.completed }}</strong>
         <span>of {{ progressData.total }} workouts</span>
+      </div>
+
+      <div *ngIf="progressData.total === 0" class="empty-plan-hint">
+        <ion-icon name="fitness-outline"></ion-icon>
+        <p>Tap <strong>Eat</strong> or <strong>Train</strong> to generate your personalised plan.</p>
       </div>
     </div>
 
