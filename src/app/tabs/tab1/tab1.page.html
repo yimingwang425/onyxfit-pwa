@@ -14,44 +14,75 @@
       <p class="widget-content">{{ aiTip }}</p>
     </div>
 
-    <div class="widget-card light">
-      <div class="widget-header">
-        <ion-icon name="trending-up-outline"></ion-icon>
-        <span>Weekly Goal</span>
-      </div>
-      
-      <div *ngIf="progressData.total > 0" class="chart-wrapper">
-        <canvas #progressChartCanvas></canvas>
-      </div>
-      <div *ngIf="progressData.total > 0" class="progress-stat">
-        <strong>{{ progressData.completed }}</strong>
-        <span>of {{ progressData.total }} workouts</span>
+    <div class="twin-cards">
+
+      <div class="mini-card">
+        <div class="mini-header">
+          <ion-icon name="trending-up-outline"></ion-icon>
+          <span>Weekly</span>
+        </div>
+        <div *ngIf="progressData.total > 0" class="mini-body">
+          <span class="big-num">{{ progressData.completed }}<small>/{{ progressData.total }}</small></span>
+          <span class="mini-label">workouts</span>
+        </div>
+        <div *ngIf="progressData.total === 0" class="mini-body empty">
+          <ion-icon name="fitness-outline" class="empty-icon"></ion-icon>
+          <span class="mini-label">Tap <strong>Eat</strong> or <strong>Train</strong></span>
+        </div>
       </div>
 
-      <div *ngIf="progressData.total === 0" class="empty-plan-hint">
-        <ion-icon name="fitness-outline"></ion-icon>
-        <p>Tap <strong>Eat</strong> or <strong>Train</strong> to generate your personalised plan.</p>
+      <div class="mini-card">
+        <div class="mini-header">
+          <ion-icon name="analytics-outline"></ion-icon>
+          <span>Weight</span>
+        </div>
+        <div *ngIf="weightHistory.length > 0" class="mini-body">
+          <canvas #sparklineCanvas class="sparkline-canvas"></canvas>
+          <span class="big-num">{{ currentWeight }}<small>kg</small></span>
+        </div>
+        <div *ngIf="weightHistory.length === 0" class="mini-body empty">
+          <ion-icon name="scale-outline" class="empty-icon"></ion-icon>
+          <span class="mini-label">No data yet</span>
+        </div>
       </div>
+
     </div>
 
     <div class="section-title">Track Today</div>
-    
-    <div class="action-grid">
-      <button class="action-tile" (click)="logMood()">
-        <div class="icon-circle mood">
-          <ion-icon name="happy-outline"></ion-icon>
-        </div>
-        <span class="label">Mood</span>
-        <span class="value" *ngIf="currentMood">{{ currentMood }}</span>
-      </button>
 
-      <button class="action-tile" (click)="logWater()">
-        <div class="icon-circle water">
-          <ion-icon name="water-outline"></ion-icon>
+    <div class="track-grid">
+      
+      <div class="track-card" (click)="logMood()">
+        <div class="track-top">
+          <div class="track-icon mood">
+            <ion-icon name="happy-outline"></ion-icon>
+          </div>
+          <button class="add-btn" (click)="$event.stopPropagation(); logMood()">
+            <ion-icon name="add"></ion-icon>
+          </button>
         </div>
-        <span class="label">Water</span>
-        <span class="value" *ngIf="currentWater > 0">{{ currentWater }} cups</span>
-      </button>
+        <span class="track-value" *ngIf="currentMood">{{ moodEmoji }} {{ currentMood }}</span>
+        <span class="track-value placeholder" *ngIf="!currentMood">Not logged</span>
+        <span class="track-label">Mood</span>
+      </div>
+
+      <div class="track-card" (click)="logWater()">
+        <div class="track-top">
+          <div class="track-icon water">
+            <ion-icon name="water-outline"></ion-icon>
+          </div>
+          <button class="add-btn" (click)="$event.stopPropagation(); logWater()">
+            <ion-icon name="add"></ion-icon>
+          </button>
+        </div>
+        <span class="track-value">{{ currentWater }}<small> / 8</small></span>
+        <div class="water-dots">
+          <span *ngFor="let dot of waterDots; let i = index"
+                class="dot" [class.filled]="i < currentWater"></span>
+        </div>
+        <span class="track-label">Glasses</span>
+      </div>
+
     </div>
 
   </div>
