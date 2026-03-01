@@ -58,7 +58,7 @@ export class ChangeEmailPage {
       this.step = 2;
       this.startResendCountdown(res.expiresIn ?? 300);
     } catch (e: any) {
-      this.error = e?.message ?? 'Failed to send OTP';
+      this.error = e?.error?.error ?? e?.message ?? 'Failed to send OTP';
     } finally { this.loading = false; }
   }
 
