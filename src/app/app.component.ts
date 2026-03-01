@@ -41,6 +41,6 @@ export class AppComponent {
       setTimeout(() => {
         this.showSplash = false;
       }, 500);
-    }, 1600);
+    }, 2400);
   }
 }
