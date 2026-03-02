@@ -3,7 +3,6 @@ import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules } 
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 import { provideHttpClient , withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './app/services/auth.interceptor';
-import { inject } from '@vercel/analytics';
 
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
@@ -23,6 +22,3 @@ bootstrapApplication(AppComponent, {
 
   ],
 });
-
-// Initialize Vercel Web Analytics
-inject();
