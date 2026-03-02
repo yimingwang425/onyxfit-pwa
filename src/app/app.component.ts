@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { IonApp, IonRouterOutlet, Platform } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth';
+import { AnalyticsComponent } from './components/analytics.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
   standalone: true,
-  imports: [IonApp, IonRouterOutlet, CommonModule],
+  imports: [IonApp, IonRouterOutlet, CommonModule, AnalyticsComponent],
 })
 export class AppComponent {
 
