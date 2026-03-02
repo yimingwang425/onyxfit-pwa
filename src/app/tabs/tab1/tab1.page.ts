@@ -13,9 +13,12 @@ import { addIcons } from 'ionicons';
 import {
   informationCircleOutline, waterOutline, sparklesOutline,
   happyOutline, barChartOutline, fitnessOutline,
-  trendingUpOutline, analyticsOutline, scaleOutline, addOutline
+  trendingUpOutline, analyticsOutline, scaleOutline,
+  addOutline, calendarOutline
 } from 'ionicons/icons';
+import { Chart } from 'chart.js/auto';
 import { environment } from '../../../environments/environment';
+import { UserProfileService } from '../../services/user-profile';
 
 @Component({
   selector: 'app-tab1',
@@ -32,7 +35,10 @@ import { environment } from '../../../environments/environment';
 })
 export class Tab1Page {
   @ViewChild('sparklineCanvas') private sparklineCanvas: ElementRef | undefined;
+  @ViewChild('weeklyChartCanvas') private weeklyChartCanvas: ElementRef | undefined;
+  @ViewChild('weightChartCanvas') private weightChartCanvas: ElementRef | undefined;
 
+  private weeklyChart: Chart | undefined;
   private mlUrl = (environment as any).mlUrl || 'http://localhost:5001';
 
   username = 'User';
@@ -44,14 +50,19 @@ export class Tab1Page {
 
   moodEmoji = '';
   weightHistory: { date: string; weight: number }[] = [];
+  weightHistoryReversed: { date: string; weight: number }[] = [];
   currentWeight = '';
   waterDots = new Array(8);
 
+  showWeeklyOverlay = false;
+  showWeightOverlay = false;
+
+  weekDayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  weekDayDone: boolean[] = [false, false, false, false, false, false, false];
+  weekDayToday = new Date().getDay();
+
   private moodEmojiMap: Record<string, string> = {
-    'Energetic': '⚡',
-    'Neutral': '😊',
-    'Tired': '😴',
-    'Stressed': '😰',
+    'Energetic': '⚡', 'Neutral': '😊', 'Tired': '😴', 'Stressed': '😰',
   };
 
   private fallbackTips = [
@@ -62,41 +73,36 @@ export class Tab1Page {
 
   constructor(
     private alertCtrl: AlertController,
-    private http: HttpClient
+    private http: HttpClient,
+    private userProfileService: UserProfileService
   ) {
     addIcons({
       informationCircleOutline, waterOutline, happyOutline,
       sparklesOutline, barChartOutline, fitnessOutline,
       trendingUpOutline, analyticsOutline, scaleOutline,
-      'add': addOutline
+      calendarOutline, 'add': addOutline
     });
   }
 
-  ionViewWillEnter() {
-    this.loadDashboardData();
-  }
-
-  ionViewDidEnter() {
-    this.drawSparkline();
-  }
-
-  ionViewWillLeave() { }
+  ionViewWillEnter() { this.loadDashboardData(); }
+  ionViewDidEnter() { this.drawSparkline(); }
+  ionViewWillLeave() { this.destroyWeeklyChart(); }
 
   loadDashboardData() {
-    const email = localStorage.getItem('registered_email');
-    this.username = email ? email.split('@')[0] : 'User';
+    const savedName = localStorage.getItem('user_display_name');
+    if (savedName) {
+      this.username = savedName;
+    } else {
+      const email = localStorage.getItem('registered_email');
+      this.username = email ? email.split('@')[0] : 'User';
+    }
 
     this.setGreeting();
     this.checkAndResetDailyData();
     this.loadProgressFromAIPlan();
     this.loadWeightHistory();
     this.loadAIInsight();
-
-    if (this.currentMood) {
-      this.moodEmoji = this.moodEmojiMap[this.currentMood] || '';
-    }
-
-    setTimeout(() => this.drawSparkline(), 0);
+    if (this.currentMood) this.moodEmoji = this.moodEmojiMap[this.currentMood] || '';
   }
 
   private loadWeightHistory() {
@@ -106,123 +112,184 @@ export class Tab1Page {
       if (raw) history = JSON.parse(raw);
     } catch { }
 
-    try {
-      const profileStr = localStorage.getItem('user_profile');
-      const planStr = localStorage.getItem('current_ai_plan');
-      let weight: number | null = null;
-
-      if (profileStr) {
-        const p = JSON.parse(profileStr);
-        weight = parseFloat(p.weightKg || p.weight);
-      }
-      if (!weight && planStr) {
-        const plan = JSON.parse(planStr);
-        weight = parseFloat(plan.weightKg);
-      }
-
-      if (weight && !isNaN(weight)) {
-        const today = new Date().toISOString().split('T')[0];
-        const exists = history.find(h => h.date === today);
-        if (!exists) {
-          history.push({ date: today, weight });
-          if (history.length > 14) history = history.slice(-14);
-          localStorage.setItem('weight_history', JSON.stringify(history));
-        }
-      }
-    } catch { }
-
-    this.weightHistory = history;
     if (history.length > 0) {
+      this.weightHistory = [...history];
       this.currentWeight = history[history.length - 1].weight.toFixed(1);
+      setTimeout(() => this.drawSparkline(), 0);
     }
+
+    this.userProfileService.getProfileData().subscribe({
+      next: (data: any) => {
+        let profile = Array.isArray(data) && data.length > 0 ? data[0] : data;
+        if (profile) {
+          const w = parseFloat(profile.weightKg || profile.weight);
+          if (!isNaN(w) && w > 0) {
+            const today = new Date().toISOString().split('T')[0];
+            const idx = history.findIndex(h => h.date === today);
+            if (idx >= 0) {
+              history[idx].weight = w;
+            } else {
+              history.push({ date: today, weight: w });
+            }
+            if (history.length > 14) history = history.slice(-14);
+            localStorage.setItem('weight_history', JSON.stringify(history));
+
+            this.weightHistory = [...history];
+            this.currentWeight = history[history.length - 1].weight.toFixed(1);
+            setTimeout(() => this.drawSparkline(), 150);
+          }
+        }
+      },
+      error: () => {
+        console.log('Tab1: Could not fetch profile from backend for weight.');
+      }
+    });
   }
 
   private drawSparkline() {
     if (!this.sparklineCanvas || this.weightHistory.length < 1) return;
-
     const canvas = this.sparklineCanvas.nativeElement as HTMLCanvasElement;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (rect.width === 0) return;
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
     ctx.scale(dpr, dpr);
-
-    const w = rect.width;
-    const h = rect.height;
+    const w = rect.width, h = rect.height;
     const weights = this.weightHistory.map(e => e.weight);
-
     if (weights.length === 1) {
-      ctx.beginPath();
-      ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#000';
-      ctx.fill();
-      return;
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#000'; ctx.fill(); return;
     }
-
-    const min = Math.min(...weights) - 0.5;
-    const max = Math.max(...weights) + 0.5;
-    const range = max - min || 1;
-    const pad = 4;
-
+    const min = Math.min(...weights) - 0.5, max = Math.max(...weights) + 0.5;
+    const range = max - min || 1, pad = 4;
     const points = weights.map((v, i) => ({
       x: pad + (i / (weights.length - 1)) * (w - pad * 2),
       y: pad + (1 - (v - min) / range) * (h - pad * 2),
     }));
-
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba(0,0,0,0.08)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    grad.addColorStop(0, 'rgba(0,0,0,0.08)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
-      const cp = {
-        x: (points[i - 1].x + points[i].x) / 2,
-        y1: points[i - 1].y,
-        y2: points[i].y
-      };
-      ctx.bezierCurveTo(cp.x, cp.y1, cp.x, cp.y2, points[i].x, points[i].y);
+      const cpx = (points[i - 1].x + points[i].x) / 2;
+      ctx.bezierCurveTo(cpx, points[i - 1].y, cpx, points[i].y, points[i].x, points[i].y);
     }
-    ctx.lineTo(points[points.length - 1].x, h);
-    ctx.lineTo(points[0].x, h);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
+    ctx.lineTo(points[points.length - 1].x, h); ctx.lineTo(points[0].x, h);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
-      const cp = {
-        x: (points[i - 1].x + points[i].x) / 2,
-        y1: points[i - 1].y,
-        y2: points[i].y
-      };
-      ctx.bezierCurveTo(cp.x, cp.y1, cp.x, cp.y2, points[i].x, points[i].y);
+      const cpx = (points[i - 1].x + points[i].x) / 2;
+      ctx.bezierCurveTo(cpx, points[i - 1].y, cpx, points[i].y, points[i].x, points[i].y);
     }
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
 
     const last = points[points.length - 1];
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#000';
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#000'; ctx.fill();
   }
+
+
+  openWeeklyDetail() {
+    this.showWeeklyOverlay = true;
+    this.computeWeekDays();
+    setTimeout(() => this.drawWeeklyDoughnut(), 50);
+  }
+
+  private computeWeekDays() {
+    const planStr = localStorage.getItem('current_ai_plan');
+    if (!planStr) { this.weekDayDone = [false, false, false, false, false, false, false]; return; }
+    try {
+      const plan = JSON.parse(planStr);
+      const wt = plan.workoutType || 'FBW';
+      const schedules: Record<string, boolean[]> = {
+        'PPL': [false, true, true, true, true, true, false],
+        'UPPER_LOWER': [false, true, true, false, true, true, false],
+        'FBW': [false, true, false, true, false, true, false],
+      };
+      const schedule = schedules[wt] || schedules['FBW'];
+      const today = new Date().getDay();
+      this.weekDayDone = schedule.map((isTraining, i) => isTraining && i < today);
+    } catch { this.weekDayDone = [false, false, false, false, false, false, false]; }
+  }
+
+  private drawWeeklyDoughnut() {
+    if (!this.weeklyChartCanvas || this.progressData.total === 0) return;
+    this.destroyWeeklyChart();
+    const ctx = this.weeklyChartCanvas.nativeElement.getContext('2d');
+    const remaining = this.progressData.total - this.progressData.completed;
+    this.weeklyChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completed', 'Remaining'],
+        datasets: [{ data: [this.progressData.completed, remaining > 0 ? remaining : 0],
+          backgroundColor: ['#000000', '#F0F0F0'], borderColor: '#ffffff', borderWidth: 3 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false }, tooltip: { enabled: true } }, cutout: '72%' }
+    });
+  }
+
+  private destroyWeeklyChart() {
+    if (this.weeklyChart) { this.weeklyChart.destroy(); this.weeklyChart = undefined; }
+  }
+
+  openWeightDetail() {
+    this.weightHistoryReversed = [...this.weightHistory].reverse();
+    this.showWeightOverlay = true;
+    setTimeout(() => this.drawWeightDetailChart(), 50);
+  }
+
+  private drawWeightDetailChart() {
+    if (!this.weightChartCanvas || this.weightHistory.length < 1) return;
+    const canvas = this.weightChartCanvas.nativeElement as HTMLCanvasElement;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return;
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    const w = rect.width, h = rect.height;
+    const weights = this.weightHistory.map(e => e.weight);
+    if (weights.length === 1) {
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#000'; ctx.fill(); return;
+    }
+    const min = Math.min(...weights) - 1, max = Math.max(...weights) + 1;
+    const range = max - min || 1, pad = 8;
+    const points = weights.map((v, i) => ({
+      x: pad + (i / (weights.length - 1)) * (w - pad * 2),
+      y: pad + (1 - (v - min) / range) * (h - pad * 2),
+    }));
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba(0,0,0,0.06)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      const cpx = (points[i - 1].x + points[i].x) / 2;
+      ctx.bezierCurveTo(cpx, points[i - 1].y, cpx, points[i].y, points[i].x, points[i].y);
+    }
+    ctx.lineTo(points[points.length - 1].x, h); ctx.lineTo(points[0].x, h);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      const cpx = (points[i - 1].x + points[i].x) / 2;
+      ctx.bezierCurveTo(cpx, points[i - 1].y, cpx, points[i].y, points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.stroke();
+    points.forEach((p, i) => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, i === points.length - 1 ? 5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#000'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, i === points.length - 1 ? 3 : 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+    });
+  }
+
 
   private checkAndResetDailyData() {
     const todayStr = new Date().toISOString().split('T')[0];
     const lastLogDate = localStorage.getItem('last_log_date');
-
     if (lastLogDate !== todayStr) {
-      localStorage.removeItem('today_mood');
-      localStorage.removeItem('today_water');
-      localStorage.setItem('last_log_date', todayStr);
-      this.currentMood = null;
-      this.currentWater = 0;
+      localStorage.removeItem('today_mood'); localStorage.removeItem('today_water');
+      localStorage.setItem('last_log_date', todayStr); this.currentMood = null; this.currentWater = 0;
     } else {
       this.currentMood = localStorage.getItem('today_mood');
       this.currentWater = parseInt(localStorage.getItem('today_water') || '0', 10);
@@ -231,59 +298,46 @@ export class Tab1Page {
   }
 
   private setGreeting() {
-    const currentHour = new Date().getHours();
-    if (currentHour < 12) this.greeting = 'Good Morning';
-    else if (currentHour < 18) this.greeting = 'Good Afternoon';
-    else this.greeting = 'Good Evening';
+    const h = new Date().getHours();
+    this.greeting = h < 12 ? 'Good Morning' : h < 18 ? 'Good Afternoon' : 'Good Evening';
   }
 
   private loadProgressFromAIPlan() {
     const planStr = localStorage.getItem('current_ai_plan');
     if (!planStr) { this.progressData = { completed: 0, total: 0 }; return; }
-
     try {
-      const plan = JSON.parse(planStr);
-      const workoutType = plan.workoutType || 'FBW';
+      const plan = JSON.parse(planStr); const wt = plan.workoutType || 'FBW';
       const schedules: Record<string, boolean[]> = {
-        'PPL':         [false, true, true, true, true, true, false],
+        'PPL': [false, true, true, true, true, true, false],
         'UPPER_LOWER': [false, true, true, false, true, true, false],
-        'FBW':         [false, true, false, true, false, true, false],
+        'FBW': [false, true, false, true, false, true, false],
       };
-      const schedule = schedules[workoutType] || schedules['FBW'];
+      const schedule = schedules[wt] || schedules['FBW'];
       const total = schedule.filter(d => d).length;
       const today = new Date().getDay();
-      let completed = 0;
-      for (let i = 1; i < today; i++) { if (schedule[i]) completed++; }
+      let completed = 0; for (let i = 1; i < today; i++) { if (schedule[i]) completed++; }
       this.progressData = { completed, total };
     } catch { this.progressData = { completed: 0, total: 0 }; }
   }
 
   private loadAIInsight() {
     this.aiTip = this.fallbackTips[Math.floor(Math.random() * this.fallbackTips.length)];
-
     const planStr = localStorage.getItem('current_ai_plan');
     let context: any = { mood: this.currentMood || 'Not logged', water: this.currentWater };
-
     if (planStr) {
       try {
-        const plan = JSON.parse(planStr);
-        context.calories = plan.caloriesKcal;
-        context.workoutType = plan.workoutType;
+        const plan = JSON.parse(planStr); context.calories = plan.caloriesKcal; context.workoutType = plan.workoutType;
         const schedules: Record<string, string[]> = {
-          'PPL':         ['Rest','Push Day','Pull Day','Leg Day','Push Day','Pull Day','Rest'],
-          'UPPER_LOWER': ['Rest','Upper Body','Lower Body','Rest','Upper Body','Lower Body','Rest'],
-          'FBW':         ['Rest','Full Body','Rest','Full Body','Rest','Full Body','Rest'],
+          'PPL': ['Rest', 'Push Day', 'Pull Day', 'Leg Day', 'Push Day', 'Pull Day', 'Rest'],
+          'UPPER_LOWER': ['Rest', 'Upper Body', 'Lower Body', 'Rest', 'Upper Body', 'Lower Body', 'Rest'],
+          'FBW': ['Rest', 'Full Body', 'Rest', 'Full Body', 'Rest', 'Full Body', 'Rest'],
         };
-        const todaySchedule = schedules[plan.workoutType] || schedules['FBW'];
-        context.workout = todaySchedule[new Date().getDay()];
+        context.workout = (schedules[plan.workoutType] || schedules['FBW'])[new Date().getDay()];
       } catch { }
     }
-
-    this.http.post<{ insight: string }>(`${this.mlUrl}/api/insight`, context)
-      .subscribe({
-        next: (res) => { if (res.insight) this.aiTip = res.insight; },
-        error: () => { }
-      });
+    this.http.post<{ insight: string }>(`${this.mlUrl}/api/insight`, context).subscribe({
+      next: (res) => { if (res.insight) this.aiTip = res.insight; }, error: () => { }
+    });
   }
 
   async logMood() {
@@ -297,53 +351,36 @@ export class Tab1Page {
       ],
       buttons: [
         { text: 'Cancel' },
-        {
-          text: 'Save',
-          handler: (data: string) => {
-            if (data) {
-              this.currentMood = data;
-              this.moodEmoji = this.moodEmojiMap[data] || '';
+        { text: 'Save', handler: (data: string) => {
+            if (data) { this.currentMood = data; this.moodEmoji = this.moodEmojiMap[data] || '';
               localStorage.setItem('today_mood', data);
               localStorage.setItem('last_log_date', new Date().toISOString().split('T')[0]);
-              this.saveMoodToBackend(data);
-              this.loadAIInsight();
-            }
-          },
-        },
+              this.saveMoodToBackend(data); this.loadAIInsight(); }
+        }},
       ],
-    });
-    await alert.present();
+    }); await alert.present();
   }
 
   async logWater() {
     const alert = await this.alertCtrl.create({
-      header: 'Log Water Intake',
-      message: 'How many glasses are you adding?',
+      header: 'Log Water Intake', message: 'How many glasses are you adding?',
       inputs: [{ name: 'water', type: 'number', min: 1, value: 1 }],
       buttons: [
         { text: 'Cancel' },
-        {
-          text: 'Add',
-          handler: (data: { water: string }) => {
+        { text: 'Add', handler: (data: { water: string }) => {
             const glasses = parseInt(data.water, 10);
-            if (glasses > 0) {
-              this.currentWater += glasses;
+            if (glasses > 0) { this.currentWater += glasses;
               localStorage.setItem('today_water', this.currentWater.toString());
               localStorage.setItem('last_log_date', new Date().toISOString().split('T')[0]);
-              this.saveWaterToBackend(this.currentWater);
-              this.loadAIInsight();
-            }
-          },
-        },
+              this.saveWaterToBackend(this.currentWater); this.loadAIInsight(); }
+        }},
       ],
-    });
-    await alert.present();
+    }); await alert.present();
   }
 
   private saveMoodToBackend(mood: string) {
     console.log('TODO: POST /api/progress/mood', { date: new Date().toISOString().split('T')[0], mood });
   }
-
   private saveWaterToBackend(totalGlasses: number) {
     console.log('TODO: POST /api/progress/water', { date: new Date().toISOString().split('T')[0], glasses: totalGlasses });
   }

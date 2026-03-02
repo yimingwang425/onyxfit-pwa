@@ -16,7 +16,7 @@
 
     <div class="twin-cards">
 
-      <div class="mini-card">
+      <div class="mini-card" (click)="openWeeklyDetail()">
         <div class="mini-header">
           <ion-icon name="trending-up-outline"></ion-icon>
           <span>Weekly</span>
@@ -26,12 +26,12 @@
           <span class="mini-label">workouts</span>
         </div>
         <div *ngIf="progressData.total === 0" class="mini-body empty">
-          <ion-icon name="fitness-outline" class="empty-icon"></ion-icon>
+          <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
           <span class="mini-label">Tap <strong>Eat</strong> or <strong>Train</strong></span>
         </div>
       </div>
 
-      <div class="mini-card">
+      <div class="mini-card" (click)="openWeightDetail()">
         <div class="mini-header">
           <ion-icon name="analytics-outline"></ion-icon>
           <span>Weight</span>
@@ -51,15 +51,10 @@
     <div class="section-title">Track Today</div>
 
     <div class="track-grid">
-      
       <div class="track-card" (click)="logMood()">
         <div class="track-top">
-          <div class="track-icon mood">
-            <ion-icon name="happy-outline"></ion-icon>
-          </div>
-          <button class="add-btn" (click)="$event.stopPropagation(); logMood()">
-            <ion-icon name="add"></ion-icon>
-          </button>
+          <div class="track-icon mood"><ion-icon name="happy-outline"></ion-icon></div>
+          <button class="add-btn" (click)="$event.stopPropagation(); logMood()"><ion-icon name="add"></ion-icon></button>
         </div>
         <span class="track-value" *ngIf="currentMood">{{ moodEmoji }} {{ currentMood }}</span>
         <span class="track-value placeholder" *ngIf="!currentMood">Not logged</span>
@@ -68,12 +63,8 @@
 
       <div class="track-card" (click)="logWater()">
         <div class="track-top">
-          <div class="track-icon water">
-            <ion-icon name="water-outline"></ion-icon>
-          </div>
-          <button class="add-btn" (click)="$event.stopPropagation(); logWater()">
-            <ion-icon name="add"></ion-icon>
-          </button>
+          <div class="track-icon water"><ion-icon name="water-outline"></ion-icon></div>
+          <button class="add-btn" (click)="$event.stopPropagation(); logWater()"><ion-icon name="add"></ion-icon></button>
         </div>
         <span class="track-value">{{ currentWater }}<small> / 8</small></span>
         <div class="water-dots">
@@ -82,8 +73,50 @@
         </div>
         <span class="track-label">Glasses</span>
       </div>
-
     </div>
 
   </div>
 </ion-content>
+
+<div class="overlay-backdrop" *ngIf="showWeeklyOverlay" (click)="showWeeklyOverlay = false">
+  <div class="overlay-panel" (click)="$event.stopPropagation()">
+    <div class="overlay-handle"></div>
+    <h2>Weekly Progress</h2>
+    <div *ngIf="progressData.total > 0" class="overlay-chart-area">
+      <canvas #weeklyChartCanvas></canvas>
+      <div class="overlay-stat">
+        <strong>{{ progressData.completed }}</strong> of {{ progressData.total }} workouts completed
+      </div>
+      <div class="day-row">
+        <div *ngFor="let d of weekDayLabels; let i = index" class="day-chip"
+             [class.done]="weekDayDone[i]" [class.today]="weekDayToday === i">{{ d }}</div>
+      </div>
+    </div>
+    <div *ngIf="progressData.total === 0" class="overlay-empty">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <p>Generate a plan from the <strong>Eat</strong> or <strong>Train</strong> tab to see your weekly progress here.</p>
+    </div>
+    <button class="overlay-close" (click)="showWeeklyOverlay = false">Close</button>
+  </div>
+</div>
+
+<div class="overlay-backdrop" *ngIf="showWeightOverlay" (click)="showWeightOverlay = false">
+  <div class="overlay-panel" (click)="$event.stopPropagation()">
+    <div class="overlay-handle"></div>
+    <h2>Weight Trend</h2>
+    <div *ngIf="weightHistory.length > 0" class="overlay-chart-area">
+      <canvas #weightChartCanvas class="weight-chart-canvas"></canvas>
+      <div class="weight-list">
+        <div *ngFor="let entry of weightHistoryReversed" class="weight-row">
+          <span class="wl-date">{{ entry.date }}</span>
+          <span class="wl-value">{{ entry.weight }} kg</span>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="weightHistory.length === 0" class="overlay-empty">
+      <ion-icon name="scale-outline"></ion-icon>
+      <p>Your weight trend will appear here once your profile data is available.</p>
+    </div>
+    <button class="overlay-close" (click)="showWeightOverlay = false">Close</button>
+  </div>
+</div>
