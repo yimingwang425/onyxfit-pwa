@@ -1,21 +1,20 @@
 <ion-content [fullscreen]="true">
-  <div class="dashboard-container">
+  <div style="padding:calc(var(--ion-safe-area-top) + 10px) 24px 40px 24px; text-align:left;">
     
-    <div class="header-section">
-      <h2>{{ greeting }},</h2>
-      <h1>{{ username }}</h1>
+    <div style="margin-bottom:24px;">
+      <h2 style="font-size:1.1rem; font-weight:500; color:#666; margin:0 0 4px 0; text-align:left;">{{ greeting }},</h2>
+      <h1 style="font-size:2rem; font-weight:700; color:#000; margin:0; line-height:1.2; letter-spacing:-0.02em; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ username }}</h1>
     </div>
 
-    <div class="widget-card dark">
-      <div class="widget-header">
-        <ion-icon name="sparkles"></ion-icon>
+    <div style="background:#000; color:#fff; border-radius:20px; padding:16px 20px; margin-bottom:16px; box-shadow:0 8px 20px rgba(0,0,0,0.15); text-align:left;">
+      <div style="display:flex; align-items:center; gap:8px; justify-content:flex-start; text-transform:uppercase; font-size:0.75rem; font-weight:700; letter-spacing:0.05em; margin-bottom:8px; text-align:left;">
+        <ion-icon name="sparkles-outline"></ion-icon>
         <span>AI Insight</span>
       </div>
-      <p class="widget-content">{{ aiTip }}</p>
+      <p style="color:#fff; font-size:0.95rem; line-height:1.4; margin:0; text-align:left;">{{ aiTip }}</p>
     </div>
 
     <div class="twin-cards">
-
       <div class="mini-card" (click)="openWeeklyDetail()">
         <div class="mini-header">
           <ion-icon name="trending-up-outline"></ion-icon>
@@ -37,7 +36,7 @@
           <span>Weight</span>
         </div>
         <div *ngIf="weightHistory.length > 0" class="mini-body">
-          <canvas #sparklineCanvas class="sparkline-canvas"></canvas>
+          <canvas #sparklineCanvas style="width:100%; height:40px; margin-bottom:8px;"></canvas>
           <span class="big-num">{{ currentWeight }}<small>kg</small></span>
         </div>
         <div *ngIf="weightHistory.length === 0" class="mini-body empty">
@@ -45,10 +44,9 @@
           <span class="mini-label">No data yet</span>
         </div>
       </div>
-
     </div>
 
-    <div class="section-title">Track Today</div>
+    <div style="font-size:1.1rem; font-weight:800; margin:0 0 16px 0; text-align:left;">Track Today</div>
 
     <div class="track-grid">
       <div class="track-card" (click)="logMood()">
@@ -74,7 +72,6 @@
         <span class="track-label">Glasses</span>
       </div>
     </div>
-
   </div>
 </ion-content>
 
@@ -84,9 +81,7 @@
     <h2>Weekly Progress</h2>
     <div *ngIf="progressData.total > 0" class="overlay-chart-area">
       <canvas #weeklyChartCanvas></canvas>
-      <div class="overlay-stat">
-        <strong>{{ progressData.completed }}</strong> of {{ progressData.total }} workouts completed
-      </div>
+      <div class="overlay-stat"><strong>{{ progressData.completed }}</strong> of {{ progressData.total }} workouts</div>
       <div class="day-row">
         <div *ngFor="let d of weekDayLabels; let i = index" class="day-chip"
              [class.done]="weekDayDone[i]" [class.today]="weekDayToday === i">{{ d }}</div>
@@ -94,7 +89,7 @@
     </div>
     <div *ngIf="progressData.total === 0" class="overlay-empty">
       <ion-icon name="calendar-outline"></ion-icon>
-      <p>Generate a plan from the <strong>Eat</strong> or <strong>Train</strong> tab to see your weekly progress here.</p>
+      <p>Generate a plan from <strong>Eat</strong> or <strong>Train</strong> tab first.</p>
     </div>
     <button class="overlay-close" (click)="showWeeklyOverlay = false">Close</button>
   </div>
@@ -105,7 +100,7 @@
     <div class="overlay-handle"></div>
     <h2>Weight Trend</h2>
     <div *ngIf="weightHistory.length > 0" class="overlay-chart-area">
-      <canvas #weightChartCanvas class="weight-chart-canvas"></canvas>
+      <canvas #weightChartCanvas style="width:100%; height:140px;"></canvas>
       <div class="weight-list">
         <div *ngFor="let entry of weightHistoryReversed" class="weight-row">
           <span class="wl-date">{{ entry.date }}</span>
@@ -115,7 +110,7 @@
     </div>
     <div *ngIf="weightHistory.length === 0" class="overlay-empty">
       <ion-icon name="scale-outline"></ion-icon>
-      <p>Your weight trend will appear here once your profile data is available.</p>
+      <p>Weight trend will appear here once data is available.</p>
     </div>
     <button class="overlay-close" (click)="showWeightOverlay = false">Close</button>
   </div>

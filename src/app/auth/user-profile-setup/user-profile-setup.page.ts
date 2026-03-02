@@ -1,21 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonButton,
-  IonSpinner,
-  IonText,
-  IonIcon,
-  IonBackButton,
-  IonButtons,
-  IonNote,
+  IonHeader, IonToolbar, IonTitle, IonContent,
+  IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
+  IonButton, IonSpinner, IonText, IonIcon,
+  IonBackButton, IonButtons, IonNote,
   NavController
 } from '@ionic/angular/standalone';
 import { AlertController } from '@ionic/angular';
@@ -34,28 +22,16 @@ import { firstValueFrom } from 'rxjs';
   styleUrls: ['./user-profile-setup.page.scss'],
   standalone: true,
   imports: [
-    IonIcon,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonInput,
-    IonSelect,
-    IonSelectOption,
-    IonButton,
-    IonSpinner,
-    IonText,
-    CommonModule,
-    ReactiveFormsModule,
-    IonBackButton,
-    IonButtons,
-    IonNote
+    IonIcon, IonHeader, IonToolbar, IonTitle, IonContent,
+    IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
+    IonButton, IonSpinner, IonText,
+    CommonModule, ReactiveFormsModule,
+    IonBackButton, IonButtons, IonNote
   ]
 })
 export class UserProfileSetupPage implements OnInit {
   form = this.fb.group({
+    displayName: [''],                                                       // ← 新增：不强制
     age: [null as number | null, [Validators.required, Validators.min(10), Validators.max(100)]],
     heightCm: [null as number | null, [Validators.required, Validators.min(80), Validators.max(380)]],
     weightKg: [null as number | null, [Validators.required, Validators.min(10)]],
@@ -119,6 +95,11 @@ export class UserProfileSetupPage implements OnInit {
   }
 
   loadExistingData() {
+    const savedName = localStorage.getItem('user_display_name');
+    if (savedName) {
+      this.form.patchValue({ displayName: savedName });
+    }
+
     this.userProfileService.getProfileData().subscribe({
       next: (data: any) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -162,7 +143,7 @@ export class UserProfileSetupPage implements OnInit {
   }
 
   async openMetabolicInfo() {
-    const msg = `We use the Mifflin-St Jeor equation...`;
+    const msg = `We use the Mifflin-St Jeor equation to calculate your metabolic rate.\n\nMale: Uses standard male BMR constant (+5).\nFemale: Uses standard female BMR constant (-161).\n\nStored as Profile 1/2 in our database.`;
     const alert = await this.alertCtrl.create({
       header: 'Biological Sex & Calculation',
       message: msg,
@@ -187,9 +168,17 @@ export class UserProfileSetupPage implements OnInit {
         throw new Error('User not logged in');
       }
 
+      const newName = (this.form.value.displayName || '').trim();
+      if (newName) {
+        localStorage.setItem('user_display_name', newName);
+      }
+
+      this.trackWeightChange();
+
+      const { displayName, ...profileFields } = this.form.value;
       const payload = {
         ...this.fullProfile,
-        ...this.form.value,
+        ...profileFields,
         user: { 
           id: account.id, 
           login: account.login 
@@ -217,5 +206,26 @@ export class UserProfileSetupPage implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  private trackWeightChange() {
+    const newWeight = parseFloat(this.form.value.weightKg as any);
+    if (!newWeight || isNaN(newWeight)) return;
+
+    let history: { date: string; weight: number }[] = [];
+    try {
+      const raw = localStorage.getItem('weight_history');
+      if (raw) history = JSON.parse(raw);
+    } catch { }
+
+    const today = new Date().toISOString().split('T')[0];
+    const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+
+    if (!lastEntry || Math.abs(lastEntry.weight - newWeight) > 0.01) {
+      history.push({ date: today, weight: newWeight });
+    }
+
+    if (history.length > 30) history = history.slice(-30);
+    localStorage.setItem('weight_history', JSON.stringify(history));
   }
 }
