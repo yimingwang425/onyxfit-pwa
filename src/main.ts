@@ -4,6 +4,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { provideHttpClient , withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './app/services/auth.interceptor';
 import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
@@ -26,3 +27,6 @@ bootstrapApplication(AppComponent, {
 
 // Initialize Vercel Web Analytics
 inject();
+
+// Initialize Vercel Speed Insights
+injectSpeedInsights();
