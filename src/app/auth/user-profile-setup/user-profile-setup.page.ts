@@ -1,9 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import {
-  IonHeader, IonToolbar, IonTitle, IonContent,
-  IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
-  IonButton, IonSpinner, IonText, IonIcon,
-  IonBackButton, IonButtons, IonNote,
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonContent,
+  IonItem, 
+  IonLabel, 
+  IonInput, 
+  IonSelect, 
+  IonSelectOption,
+  IonButton, 
+  IonSpinner, 
+  IonText, 
+  IonIcon,
+  IonBackButton, 
+  IonButtons, 
+  IonNote,
   NavController
 } from '@ionic/angular/standalone';
 import { AlertController } from '@ionic/angular';
@@ -22,16 +34,29 @@ import { firstValueFrom } from 'rxjs';
   styleUrls: ['./user-profile-setup.page.scss'],
   standalone: true,
   imports: [
-    IonIcon, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
-    IonButton, IonSpinner, IonText,
-    CommonModule, ReactiveFormsModule,
-    IonBackButton, IonButtons, IonNote
+    IonIcon, 
+    IonHeader, 
+    IonToolbar, 
+    IonTitle, 
+    IonContent,
+    IonItem, 
+    IonLabel, 
+    IonInput, 
+    IonSelect, 
+    IonSelectOption,
+    IonButton,
+     IonSpinner, 
+     IonText,
+    CommonModule, 
+    ReactiveFormsModule,
+    IonBackButton, 
+    IonButtons, 
+    IonNote
   ]
 })
 export class UserProfileSetupPage implements OnInit {
   form = this.fb.group({
-    displayName: [''],                                                       // ← 新增：不强制
+    displayName: [''],
     age: [null as number | null, [Validators.required, Validators.min(10), Validators.max(100)]],
     heightCm: [null as number | null, [Validators.required, Validators.min(80), Validators.max(380)]],
     weightKg: [null as number | null, [Validators.required, Validators.min(10)]],
@@ -132,12 +157,12 @@ export class UserProfileSetupPage implements OnInit {
 
   private patchForm(obj: any) {
     this.form.patchValue({
-      age: obj.age ?? obj.ageYears ?? null,
-      heightCm: obj.heightCm ?? obj.height_cm ?? obj.height ?? null,
-      weightKg: obj.weightKg ?? obj.weight_kg ?? obj.weight ?? null,
+      age: obj.age ?? null,
+      heightCm: obj.heightCm ?? null,
+      weightKg: obj.weightKg ?? null,
       activityLevel: obj.activityLevel ?? null,
       goal: obj.goal ?? null,
-      dietPref: obj.dietPref ?? obj.preference ?? obj.diet ?? null,
+      dietPref: obj.dietPref ?? null,
       metabolicProfile: obj.metabolicProfile ?? null
     });
   }

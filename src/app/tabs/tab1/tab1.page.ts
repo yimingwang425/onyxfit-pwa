@@ -3,15 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
-  IonContent, IonIcon, IonSpinner
+  IonContent,
+  IonIcon, 
+  IonSpinner
 } from '@ionic/angular/standalone';
 import { AlertController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
-  informationCircleOutline, waterOutline, sparklesOutline,
-  happyOutline, barChartOutline, fitnessOutline,
-  trendingUpOutline, analyticsOutline, scaleOutline,
-  addOutline, calendarOutline
+  informationCircleOutline, 
+  waterOutline, 
+  sparklesOutline,
+  happyOutline, 
+  barChartOutline, 
+  fitnessOutline,
+  trendingUpOutline, 
+  analyticsOutline, 
+  scaleOutline,
+  addOutline, 
+  calendarOutline
 } from 'ionicons/icons';
 import { Chart } from 'chart.js/auto';
 import { environment } from '../../../environments/environment';
@@ -22,7 +31,12 @@ import { UserProfileService } from '../../services/user-profile';
   templateUrl: 'tab1.page.html',
   styleUrls: ['tab1.page.scss'],
   standalone: true,
-  imports: [CommonModule, RouterLink, IonContent, IonIcon, IonSpinner],
+  imports: [
+    CommonModule, 
+    RouterLink, 
+    IonContent, 
+    IonIcon, 
+    IonSpinner],
 })
 export class Tab1Page {
   @ViewChild('sparklineCanvas') private sparklineCanvas: ElementRef | undefined;
@@ -30,7 +44,7 @@ export class Tab1Page {
   @ViewChild('weightChartCanvas') private weightChartCanvas: ElementRef | undefined;
 
   private weeklyChart: Chart | undefined;
-  private mlUrl = (environment as any).mlUrl || 'http://localhost:5001';
+  private mlUrl = environment.mlUrl;
 
   username = 'User';
   greeting = 'Hello';
@@ -67,16 +81,30 @@ export class Tab1Page {
     private userProfileService: UserProfileService 
   ) {
     addIcons({
-      informationCircleOutline, waterOutline, happyOutline,
-      sparklesOutline, barChartOutline, fitnessOutline,
-      trendingUpOutline, analyticsOutline, scaleOutline,
+      informationCircleOutline, 
+      waterOutline, 
+      happyOutline,
+      sparklesOutline, 
+      barChartOutline, 
+      fitnessOutline,
+      trendingUpOutline, 
+      analyticsOutline, 
+      scaleOutline,
       calendarOutline, 'add': addOutline
     });
   }
 
-  ionViewWillEnter() { this.loadDashboardData(); }
-  ionViewDidEnter() { this.drawSparkline(); }
-  ionViewWillLeave() { this.destroyWeeklyChart(); }
+  ionViewWillEnter() { 
+    this.loadDashboardData(); 
+  }
+
+  ionViewDidEnter() { 
+    this.drawSparkline(); 
+  }
+
+  ionViewWillLeave() { 
+    this.destroyWeeklyChart(); 
+  }
 
   loadDashboardData() {
     const savedName = localStorage.getItem('user_display_name');
@@ -110,7 +138,7 @@ export class Tab1Page {
       next: (data: any) => {
         const profile = Array.isArray(data) && data.length > 0 ? data[0] : data;
         if (!profile) return;
-        const w = parseFloat(profile.weightKg || profile.weight);
+        const w = parseFloat(profile.weightKg);
         if (isNaN(w) || w <= 0) return;
 
         const today = new Date().toISOString().split('T')[0];
@@ -312,33 +340,51 @@ export class Tab1Page {
 
   private loadProgressFromAIPlan() {
     const planStr = localStorage.getItem('current_ai_plan');
-    if (!planStr) { this.progressData = { completed: 0, total: 0 }; return; }
+    if (!planStr) { 
+      this.progressData = { completed: 0, total: 0 }; 
+      return; 
+    }
+
     try {
       const plan = JSON.parse(planStr);
       const wt = plan.workoutType || 'FBW';
+
       const schedules: Record<string, boolean[]> = {
         'PPL': [false, true, true, true, true, true, false],
         'UPPER_LOWER': [false, true, true, false, true, true, false],
         'FBW': [false, true, false, true, false, true, false],
       };
+
       const schedule = schedules[wt] || schedules['FBW'];
       const total = schedule.filter(d => d).length;
-      const today = new Date().getDay();
+
+      const today = new Date().getDay(); // 0=Sun ... 6=Sat
       let completed = 0;
-      for (let i = 1; i < today; i++) { if (schedule[i]) completed++; }
+      for (let i = 1; i < today; i++) { 
+        if (schedule[i]) completed++; 
+      }
+
       this.progressData = { completed, total };
-    } catch { this.progressData = { completed: 0, total: 0 }; }
+    } catch { 
+      this.progressData = { completed: 0, total: 0 }; 
+    }
   }
 
   private loadAIInsight() {
     this.aiTip = this.fallbackTips[Math.floor(Math.random() * this.fallbackTips.length)];
+
     const planStr = localStorage.getItem('current_ai_plan');
-    let context: any = { mood: this.currentMood || 'Not logged', water: this.currentWater };
+    let context: any = { 
+      mood: this.currentMood || 'Not logged', 
+      water: this.currentWater 
+    };
+
     if (planStr) {
       try {
         const plan = JSON.parse(planStr);
         context.calories = plan.caloriesKcal;
         context.workoutType = plan.workoutType;
+
         const schedules: Record<string, string[]> = {
           'PPL': ['Rest', 'Push Day', 'Pull Day', 'Leg Day', 'Push Day', 'Pull Day', 'Rest'],
           'UPPER_LOWER': ['Rest', 'Upper Body', 'Lower Body', 'Rest', 'Upper Body', 'Lower Body', 'Rest'],
@@ -347,8 +393,11 @@ export class Tab1Page {
         context.workout = (schedules[plan.workoutType] || schedules['FBW'])[new Date().getDay()];
       } catch { }
     }
-    this.http.post<{ insight: string }>(`${this.mlUrl}/api/insight`, context).subscribe({
-      next: (res) => { if (res.insight) this.aiTip = res.insight; },
+    this.http.post<{ insight: string }>(`${this.mlUrl}/api/insight`, context)
+    .subscribe({
+      next: (res) => { 
+        if (res.insight) this.aiTip = res.insight; 
+      },
       error: () => { }
     });
   }
@@ -382,7 +431,13 @@ export class Tab1Page {
     const alert = await this.alertCtrl.create({
       header: 'Log Water Intake',
       message: 'How many glasses are you adding?',
-      inputs: [{ name: 'water', type: 'number', min: 1, value: 1 }],
+      inputs: [
+        { 
+        name: 'water', 
+        type: 'number', 
+        min: 1, 
+        value: 1 }
+      ],
       buttons: [
         { text: 'Cancel' },
         { text: 'Add', handler: (data: { water: string }) => {
