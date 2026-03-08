@@ -134,6 +134,7 @@ export class LoginPasswordPage implements OnInit {
   }
 
   async forgotPassword() {
+    console.log('forgotPassword called, email:', this.email);
     if (!this.email) {
       this.router.navigate(['/auth/password-reset-email']);
       return;
