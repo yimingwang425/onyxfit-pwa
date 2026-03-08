@@ -140,15 +140,19 @@ export class LoginPasswordPage implements OnInit {
       return;
     }
 
-    this.passwordResetService.sendOtp(this.email).subscribe({
-      next: () => {
-        console.log('OTP sent successfully');
-        this.router.navigate(['/auth/password-reset-verify']);
-      },
-      error: (err: any) => {
-        console.error('sendOtp error:', err);
-      }
-    });
+    try {
+      console.log('About to call sendOtp...');
+      const obs = this.passwordResetService.sendOtp(this.email);
+      console.log('Observable created:', obs);
+      obs.subscribe({
+        next: (val) => console.log('OTP next:', val),
+        error: (err) => console.error('OTP error:', err),
+        complete: () => console.log('OTP complete')
+      });
+      console.log('Subscribe called');
+    } catch (e) {
+      console.error('Sync error:', e);
+    }
   }
 
   async showAlert(header: string, message: string) {
