@@ -140,21 +140,13 @@ export class LoginPasswordPage implements OnInit {
       return;
     }
 
-    const loading = await this.loadingCtrl.create({
-      message: 'Sending verification code...',
-      spinner: 'crescent',
-    });
-    await loading.present();
-
     this.passwordResetService.sendOtp(this.email).subscribe({
       next: () => {
-        loading.dismiss();
+        console.log('OTP sent successfully');
         this.router.navigate(['/auth/password-reset-verify']);
       },
       error: (err: any) => {
-        loading.dismiss();
-        console.error('Failed to send reset OTP:', err);
-        this.showAlert('Failed to send', 'We are unable to send the verification code to your email address. Please try again later.');
+        console.error('sendOtp error:', err);
       }
     });
   }
