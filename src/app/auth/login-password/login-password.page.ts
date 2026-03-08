@@ -145,7 +145,14 @@ export class LoginPasswordPage implements OnInit {
       const obs = this.passwordResetService.sendOtp(this.email);
       console.log('Observable created:', obs);
       obs.subscribe({
-        next: (val) => console.log('OTP next:', val),
+        next: (val) => {
+  console.log('OTP next:', val);
+  console.log('Attempting navigate...');
+  this.router.navigate(['/auth/password-reset-verify']).then(
+    (success) => console.log('Navigate result:', success),
+    (err) => console.error('Navigate error:', err)
+  );
+},
         error: (err) => console.error('OTP error:', err),
         complete: () => console.log('OTP complete')
       });
