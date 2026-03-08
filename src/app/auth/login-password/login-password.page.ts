@@ -134,32 +134,27 @@ export class LoginPasswordPage implements OnInit {
   }
 
   async forgotPassword() {
-    console.log('forgotPassword called, email:', this.email);
     if (!this.email) {
       this.router.navigate(['/auth/password-reset-email']);
       return;
     }
 
-    try {
-      console.log('About to call sendOtp...');
-      const obs = this.passwordResetService.sendOtp(this.email);
-      console.log('Observable created:', obs);
-      obs.subscribe({
-        next: (val) => {
-  console.log('OTP next:', val);
-  console.log('Attempting navigate...');
-  this.router.navigate(['/auth/password-reset-verify']).then(
-    (success) => console.log('Navigate result:', success),
-    (err) => console.error('Navigate error:', err)
-  );
-},
-        error: (err) => console.error('OTP error:', err),
-        complete: () => console.log('OTP complete')
-      });
-      console.log('Subscribe called');
-    } catch (e) {
-      console.error('Sync error:', e);
-    }
+    const loading = await this.loadingCtrl.create({
+      message: 'Sending verification code...',
+      spinner: 'crescent',
+    });
+    await loading.present();
+
+    this.passwordResetService.sendOtp(this.email).subscribe({
+      next: () => {
+        loading.dismiss();
+        this.router.navigate(['/auth/password-reset-verify']).then();
+      },
+      error: () => {
+        loading.dismiss();
+        this.showAlert('Failed to send', 'Unable to send verification code. Please try again.');
+      }
+    });
   }
 
   async showAlert(header: string, message: string) {
