@@ -222,7 +222,8 @@ export class MealPlanService {
     for (let offset = 0; offset < remaining; offset++) {
       const i = (today + offset) % 7;
       const dayName = days[i];
-      const isRestDay = (i === 0 || i === 6);
+      const restSet = MealPlanService.REST_DAYS[aiPlan.workoutType || 'FBW'] ?? MealPlanService.REST_DAYS['FBW'];
+      const isRestDay = restSet.has(i);
 
       week.push({
         day: dayName,
@@ -236,5 +237,11 @@ export class MealPlanService {
 
   private getDayName(dow: number): string {
     return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dow] || '?';
+  }
+
+  private static readonly REST_DAYS: Record<string, Set<number>> ={
+    PPL: new Set([0, 6]),
+    UPPER_LOWER: new Set([0, 5, 6]),
+    FBW: new Set([0, 2, 4, 6]),
   }
 }
